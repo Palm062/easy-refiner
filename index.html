@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Novelist Pro | Progress Edition</title>
+    <title>AI Novelist Pro | Unlocked Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Noto+Sans+Thai:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
@@ -161,7 +161,7 @@
         if (name) set(ref(db, `playlists/${name}`), true);
     };
 
-    // แปลและเกลา + Progress (FIXED VERSION)
+    // แปลและเกลา + Progress (UNLOCKED VERSION)
     document.getElementById('aiBtn').onclick = async () => {
         const text = document.getElementById('srcText').value;
         const pName = document.getElementById('pSelect').value;
@@ -185,12 +185,20 @@
             const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: `คุณคือนักแปลนิยายมืออาชีพ ${pName ? `แปลเรื่อง ${pName}` : ''} บริบท: ${memory} \n แปลและเกลาให้เป็นสำนวนนิยาย: ${text}` }] }] })
+                body: JSON.stringify({ 
+                    contents: [{ parts: [{ text: `คุณคือนักแปลนิยายมืออาชีพ ${pName ? `แปลเรื่อง ${pName}` : ''} บริบท: ${memory} \n แปลและเกลาให้เป็นสำนวนนิยาย: ${text}` }] }],
+                    // ปรับระดับความเข้มงวดให้ต่ำสุดเพื่อรองรับเนื้อหานิยายทุกแนว
+                    safetySettings: [
+                        { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                        { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                        { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                        { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+                    ]
+                })
             });
 
             const d = await res.json();
 
-            // ตรวจสอบโครงสร้างข้อมูลเพื่อป้องกัน Error Reading '0'
             if (d && d.candidates && d.candidates[0] && d.candidates[0].content && d.candidates[0].content.parts) {
                 const out = d.candidates[0].content.parts[0].text;
                 document.getElementById('aiRes').innerText = out;
@@ -199,7 +207,7 @@
             } else {
                 console.error("AI Error Details:", d);
                 updateProgress(0, "⚠️ AI ปฏิเสธการแปล");
-                alert("ไม่สามารถแปลได้: AI อาจปฏิเสธเนื้อหาส่วนนี้ หรือระบบขัดข้องชั่วคราว");
+                alert("AI ยังคงปฏิเสธการแปลส่วนนี้ อาจเป็นเพราะเนื้อหามีความสุ่มเสี่ยงสูงมาก แนะนำให้ลองแปลแยกทีละประโยคครับ");
             }
 
         } catch (e) { 
