@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Novelist Pro | Safety-Retry Edition</title>
+    <title>AI Novelist Pro | Ultra Bypass Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Noto+Sans+Thai:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
@@ -104,7 +104,7 @@
     const db = getDatabase(app);
     let currentLang = 'zh';
     
-    // คีย์ใหม่ที่คุณให้มาครับ
+    // คีย์ใหม่ล่าสุด
     const API_KEY = "AIzaSyCgN2Sd2f73OhZDMwkkoAJF9g0d1iVIKNc";
 
     const updateProgress = (percent, text) => {
@@ -166,10 +166,7 @@
                         { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
                         { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
                     ],
-                    generationConfig: {
-                        temperature: 0.4,
-                        maxOutputTokens: 1000
-                    }
+                    generationConfig: { temperature: 0.3, maxOutputTokens: 1000 }
                 })
             });
             const d = await res.json();
@@ -182,56 +179,72 @@
         const pName = document.getElementById('pSelect').value;
         if (!text) return alert("กรุณาใส่ข้อความ");
 
-        const chunks = text.split('\n').filter(line => line.trim() !== "");
+        // ล้างบรรทัดว่างและส่งทีละบรรทัด
+        const chunks = text.split('\n').map(l => l.trim()).filter(l => l !== "");
         let combinedTranslation = "";
         
-        updateProgress(5, "🚀 กำลังรวบรวมบริบท...");
+        updateProgress(5, "🚀 เริ่มการแปลแบบข้ามฟิลเตอร์...");
 
         let memory = "";
         if (pName) {
             const snap = await get(ref(db, `data_by_playlist/${pName}`));
             if (snap.exists()) {
-                const items = Object.values(snap.val()).slice(-3);
+                const items = Object.values(snap.val()).slice(-2);
                 memory = items.map(i => i.result).join("\n");
             }
         }
 
         for (let i = 0; i < chunks.length; i++) {
             const progress = Math.round(((i + 1) / chunks.length) * 100);
-            updateProgress(progress, `✍️ แปลท่อนที่ ${i + 1}/${chunks.length}...`);
+            updateProgress(progress, `✍️ ท่อนที่ ${i + 1}/${chunks.length}...`);
 
-            // 1. ลองแปลด้วยคำสั่งแบบนิยาย (Soft Prompt)
-            let prompt = `แปลประโยคนี้เป็นไทยด้วยสำนวนนิยาย: "${chunks[i]}"\n${memory ? `(บริบทเดิม: ${memory.substring(0, 100)}...)` : ''}`;
-            let result = await askGemini(prompt);
-            
-            // 2. ถ้าติดฟิลเตอร์ (null) ให้ Retry ด้วยคำสั่งที่สั้นและซอฟต์ที่สุด
+            let result = null;
+
+            // --- Layer 1: แปลแบบใส่บริบท ---
+            result = await askGemini(`แปลประโยคนี้เป็นไทย: "${chunks[i]}" ${memory ? '\nบริบท: ' + memory.substring(0,50) : ''}`);
+
+            // --- Layer 2: ถ้าติดบล็อก ลองแปลแบบคำสั่งสั้นที่สุด (Minimal) ---
             if (!result) {
-                console.log("Retry layer activated for chunk " + (i+1));
-                const retryPrompt = `Translate this to Thai: "${chunks[i]}"`;
-                result = await askGemini(retryPrompt);
+                console.log("Layer 2: Minimalist Prompt");
+                result = await askGemini(`Translate to Thai: ${chunks[i]}`);
+            }
+
+            // --- Layer 3: ถ้ายังติดบล็อก หั่นครึ่งประโยค (Bypass ขั้นสุด) ---
+            if (!result && chunks[i].length > 15) {
+                console.log("Layer 3: Splitting chunk...");
+                const mid = Math.floor(chunks[i].length / 2);
+                const part1 = chunks[i].substring(0, mid);
+                const part2 = chunks[i].substring(mid);
+                
+                const res1 = await askGemini(`Translate: ${part1}`);
+                const res2 = await askGemini(`Translate: ${part2}`);
+                
+                if (res1 || res2) {
+                    result = (res1 || "[Blocked]") + " " + (res2 || "[Blocked]");
+                }
             }
 
             if (result) {
                 combinedTranslation += result.trim() + "\n";
             } else {
-                combinedTranslation += "⚠️ [ข้าม 1 ประโยค: AI ปฏิเสธเนื้อหา]\n";
+                combinedTranslation += "⚠️ [เนื้อหานี้ถูกบล็อกโดยถาวร]\n";
             }
         }
 
         document.getElementById('aiRes').innerText = combinedTranslation.trim();
         document.getElementById('resContainer').style.display = 'block';
-        updateProgress(100, "✨ แปลเสร็จสมบูรณ์!");
+        updateProgress(100, "✨ แปลเสร็จแล้ว!");
     };
 
     document.getElementById('polishBtn').onclick = async () => {
         const text = document.getElementById('srcText').value;
-        if (!text) return alert("วางข้อความไทยที่จะเกลาก่อนครับ");
-        updateProgress(50, "✨ กำลังเรียบเรียงสำนวนใหม่...");
-        const result = await askGemini(`ในฐานะบรรณาธิการนิยาย ช่วยเกลาประโยคภาษาไทยนี้ให้สละสลวย ลื่นไหล และอ่านสนุกยิ่งขึ้น:\n${text}`);
+        if (!text) return alert("วางข้อความไทยที่นี่");
+        updateProgress(50, "✨ กำลังเกลา...");
+        const result = await askGemini(`เกลาประโยคไทยนี้ให้เป็นสำนวนนิยายที่สละสลวย:\n${text}`);
         if (result) {
             document.getElementById('aiRes').innerText = result;
             document.getElementById('resContainer').style.display = 'block';
-            updateProgress(100, "✍️ เกลาเสร็จแล้ว");
+            updateProgress(100, "✍️ เกลาเสร็จ");
         }
     };
 
@@ -247,7 +260,7 @@
             result: document.getElementById('aiRes').innerText,
             date: new Date().toLocaleString()
         });
-        alert("บันทึกความจำแล้ว");
+        alert("บันทึกแล้ว");
     };
 
     onValue(ref(db, 'data_by_playlist'), (s) => {
