@@ -3,113 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Dual Refiner | Copy & Save</title>
+    <title>AI Dual Refiner | Playlist Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Noto+Sans+Thai:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #f8f9fa;
+            --bg-color: #f1f3f5;
             --card-bg: #ffffff;
-            --text-main: #2d3436;
-            --text-sub: #636e72;
             --accent-cn: #e17055;
             --accent-en: #0984e3;
-            --border: #edf2f7;
-            --success: #00b894;
+            --text-main: #2d3436;
+            --text-sub: #636e72;
+            --border: #e9ecef;
         }
 
         * { box-sizing: border-box; transition: all 0.2s ease; }
-        body { font-family: 'Inter', 'Noto Sans Thai', sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 40px 20px; display: flex; justify-content: center; }
+        body { font-family: 'Inter', 'Noto Sans Thai', sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 20px; display: flex; justify-content: center; }
         .app-container { width: 100%; max-width: 650px; }
 
-        header { text-align: center; margin-bottom: 30px; }
-        header h1 { font-weight: 600; font-size: 26px; margin: 0; }
+        .card { background: var(--card-bg); border-radius: 20px; padding: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid var(--border); margin-bottom: 20px; }
         
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; background: #eee; padding: 5px; border-radius: 12px; }
-        .tab { flex: 1; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; background: none; color: var(--text-sub); }
+        /* Tabs */
+        .tabs { display: flex; gap: 8px; margin-bottom: 15px; background: #dee2e6; padding: 4px; border-radius: 12px; }
+        .tab { flex: 1; padding: 10px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; background: none; color: var(--text-sub); }
         .tab.active[data-lang="zh"] { background: var(--accent-cn); color: white; }
         .tab.active[data-lang="en"] { background: var(--accent-en); color: white; }
 
-        .card { background: var(--card-bg); border-radius: 24px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); border: 1px solid var(--border); }
+        /* Input Area */
+        textarea { width: 100%; border: 1px solid var(--border); border-radius: 12px; padding: 15px; font-size: 16px; margin-bottom: 15px; outline: none; background: #f8f9fa; }
+        .result-box { background: #f8f9fa; border: 1px solid var(--border); border-radius: 12px; padding: 15px; min-height: 80px; white-space: pre-wrap; margin-bottom: 15px; border-left: 4px solid #dee2e6; font-size: 15px; line-height: 1.6; }
 
-        .upload-section { border: 2px dashed #cbd5e0; border-radius: 20px; padding: 30px; text-align: center; cursor: pointer; background: #fdfdfd; margin-bottom: 20px; }
-        #imagePreview { width: 100%; border-radius: 12px; margin-top: 15px; display: none; }
-
-        .status-chip { display: inline-block; padding: 5px 15px; border-radius: 50px; font-size: 12px; font-weight: 600; margin-bottom: 15px; background: #f1f2f6; }
+        /* Buttons */
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px; }
+        .btn-primary { background: var(--accent-cn); color: white; }
+        .active-en .btn-primary { background: var(--accent-en); }
+        .btn-copy { background: #636e72; color: white; }
         
-        .label { font-size: 13px; font-weight: 600; color: var(--text-sub); margin-bottom: 8px; display: block; }
-        textarea { width: 100%; border: 1px solid var(--border); border-radius: 12px; padding: 15px; font-size: 16px; font-family: inherit; margin-bottom: 15px; outline: none; background: #fafafa; }
+        /* Playlist Selector */
+        .playlist-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .select-input { flex: 1; padding: 12px; border-radius: 10px; border: 1px solid var(--border); margin-right: 10px; font-family: inherit; }
+        .btn-add-playlist { background: #00b894; color: white; border: none; padding: 12px; border-radius: 10px; cursor: pointer; width: 45px; height: 45px; }
 
-        .result-box { background: #fcfcfc; border: 1px solid var(--border); border-radius: 12px; padding: 15px; min-height: 80px; white-space: pre-wrap; font-size: 15px; line-height: 1.6; margin-bottom: 15px; border-left: 4px solid #ddd; position: relative; }
-        .active-cn .result-box { border-left-color: var(--accent-cn); }
-        .active-en .result-box { border-left-color: var(--accent-en); }
+        /* History Sections */
+        .folder-card { background: white; border-radius: 15px; border: 1px solid var(--border); margin-bottom: 10px; overflow: hidden; }
+        .folder-header { padding: 15px; background: #f8f9fa; cursor: pointer; display: flex; justify-content: space-between; font-weight: 600; border-bottom: 1px solid var(--border); }
+        .folder-content { display: none; padding: 10px; }
+        .folder-content.open { display: block; }
 
-        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-        .btn { padding: 16px; border: none; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        
-        .btn-refine { grid-column: span 2; display: none; }
-        .active-cn .btn-refine { background: var(--accent-cn); display: flex; }
-        .active-en .btn-refine { background: var(--accent-en); display: flex; }
-        
-        .btn-copy { background: #636e72; display: none; }
-        .btn-save { background: var(--success); display: none; }
-
-        /* History List */
-        .history-item { background: white; padding: 15px; border-radius: 15px; margin-bottom: 12px; border: 1px solid var(--border); position: relative; }
-        .tag { font-size: 10px; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; margin-bottom: 8px; display: inline-block; color: white; }
-        .tag-zh { background: var(--accent-cn); }
-        .tag-en { background: var(--accent-en); }
-        .btn-action-small { background: none; border: 1px solid #eee; padding: 4px 8px; border-radius: 6px; cursor: pointer; font-size: 11px; color: var(--text-sub); margin-left: 5px; }
-        .btn-action-small:hover { background: #f1f2f6; }
-        .history-content { font-size: 14px; margin-top: 5px; }
+        .vocab-item { padding: 12px; border-bottom: 1px solid #f1f3f5; position: relative; }
+        .vocab-item:last-child { border-bottom: none; }
     </style>
 </head>
 <body class="active-cn">
 
 <div class="app-container">
-    <header>
-        <h1>AI Dual Refiner</h1>
-        <p>สแกน แปล และคัดลอกผลลัพธ์ได้ในคลิกเดียว</p>
-    </header>
-
-    <div class="tabs">
-        <button class="tab active" data-lang="zh">🇨🇳 จีน → ไทย</button>
-        <button class="tab" data-lang="en">🇺🇸 อังกฤษ → ไทย</button>
-    </div>
-
     <div class="card">
-        <div class="upload-section" onclick="document.getElementById('fileInput').click()">
-            <span style="font-size: 30px;">📸</span><br>
-            <span id="uploadText">เลือกรูปภาพภาษาจีน</span>
-            <input type="file" id="fileInput" accept="image/*" style="display:none">
-            <img id="imagePreview">
+        <div class="tabs">
+            <button class="tab active" data-lang="zh">🇨🇳 จีน → ไทย</button>
+            <button class="tab" data-lang="en">🇺🇸 อังกฤษ → ไทย</button>
         </div>
 
-        <div id="status" class="status-chip">โหมด: ภาษาจีน</div>
-
-        <label class="label">ต้นฉบับที่สแกนได้</label>
-        <textarea id="sourceText" rows="3" placeholder="ข้อความจะปรากฏที่นี่..."></textarea>
-
-        <button id="refineBtn" class="btn btn-refine">✨ เริ่มการแปลและเกลาสำนวน</button>
-
-        <label class="label">ผลลัพธ์การเกลาจาก AI</label>
+        <textarea id="sourceText" rows="3" placeholder="สแกนหรือพิมพ์ข้อความที่นี่..."></textarea>
+        <button id="refineBtn" class="btn btn-primary">✨ แปลและเกลาสำนวน</button>
+        
         <div id="aiResult" class="result-box">---</div>
 
-        <div class="btn-group">
+        <div class="playlist-header">
+            <select id="playlistSelect" class="select-input">
+                <option value="General">เลือกเพลย์ลิสต์ (General)</option>
+            </select>
+            <button class="btn-add-playlist" onclick="addNewPlaylist()">➕</button>
+        </div>
+
+        <div id="actionBtns" style="display:none;">
             <button id="copyBtn" class="btn btn-copy">📋 คัดลอกทั้งหมด</button>
-            <button id="saveBtn" class="btn btn-save">💾 บันทึกเก็บไว้</button>
+            <button id="saveBtn" class="btn btn-primary" style="background:#00b894;">💾 บันทึกลงเพลย์ลิสต์</button>
         </div>
     </div>
 
-    <div style="margin-top: 40px;">
-        <h3 style="text-align: center; font-size: 18px; color: var(--text-sub);">📚 คลังคำศัพท์ของคุณ</h3>
-        <div id="vocabList"></div>
-    </div>
+    <h3 style="text-align: center; color: var(--text-sub);">📚 เพลย์ลิสต์คำศัพท์</h3>
+    <div id="playlistContainer"></div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getDatabase, ref, push, onValue, remove, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDjxB3WDZ7Q4EpZXskv93NP1GBAy3SCzLU",
@@ -120,145 +98,105 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    const vocabsRef = ref(db, 'dual_language_vocabs');
-
+    
     let currentLang = 'zh';
 
-    // UI Elements
+    // Tabs logic
     const tabs = document.querySelectorAll('.tab');
-    const sourceBox = document.getElementById('sourceText');
-    const aiResultBox = document.getElementById('aiResult');
-    const status = document.getElementById('status');
-    const uploadText = document.getElementById('uploadText');
-    const copyBtn = document.getElementById('copyBtn');
-    const saveBtn = document.getElementById('saveBtn');
-
-    // Switch Tabs
     tabs.forEach(tab => {
         tab.onclick = () => {
             tabs.forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
             currentLang = tab.dataset.lang;
             document.body.className = currentLang === 'zh' ? 'active-cn' : 'active-en';
-            status.innerText = `โหมด: ${currentLang === 'zh' ? 'ภาษาจีน' : 'ภาษาอังกฤษ'}`;
-            uploadText.innerText = `เลือกรูปภาพ${currentLang === 'zh' ? 'ภาษาจีน' : 'ภาษาอังกฤษ'}`;
-            sourceBox.value = "";
-            aiResultBox.innerText = "---";
-            copyBtn.style.display = 'none';
-            saveBtn.style.display = 'none';
         };
     });
 
-    // OCR Logic
-    document.getElementById('fileInput').onchange = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        document.getElementById('imagePreview').src = URL.createObjectURL(file);
-        document.getElementById('imagePreview').style.display = 'block';
-        
-        status.innerText = "🔍 กำลังประมวลผลรูปภาพ...";
-        const langCode = currentLang === 'zh' ? 'chi_sim' : 'eng';
-        const worker = await Tesseract.createWorker(langCode);
-        const ret = await worker.recognize(file);
-        sourceBox.value = ret.data.text.trim();
-        await worker.terminate();
-        status.innerText = "✅ สแกนสำเร็จ";
+    // Handle Playlists
+    const playlistSelect = document.getElementById('playlistSelect');
+    onValue(ref(db, 'playlists'), (snapshot) => {
+        const lists = snapshot.val() || { "General": true };
+        playlistSelect.innerHTML = "";
+        Object.keys(lists).forEach(name => {
+            let opt = new Option(name, name);
+            playlistSelect.add(opt);
+        });
+    });
+
+    window.addNewPlaylist = () => {
+        const name = prompt("ชื่อเพลย์ลิสต์ใหม่:");
+        if (name) set(ref(db, `playlists/${name}`), true);
     };
 
-    // AI Logic
+    // AI Translation
     document.getElementById('refineBtn').onclick = async () => {
-        const text = sourceBox.value;
+        const text = document.getElementById('sourceText').value;
         if (!text) return;
-
-        status.innerText = "🤖 AI กำลังเกลาสำนวน...";
+        document.getElementById('aiResult').innerText = "🤖 กำลังประมวลผล...";
+        
         const API_KEY = "AIzaSyBNRCkZfR7H2Xkm1aIrqnS-OzFMj8Adh-I";
-        const prompt = currentLang === 'zh' 
-            ? `ในฐานะผู้เชี่ยวชาญภาษาจีน ช่วยแปลข้อความนี้เป็นไทยแบบสละสลวย และสรุปคำศัพท์: "${text}"`
-            : `As an English expert, translate this to elegant Thai and summarize vocabulary: "${text}"`;
+        const prompt = `Translate this ${currentLang === 'zh' ? 'Chinese' : 'English'} to elegant Thai and list key vocabulary: "${text}"`;
 
         try {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
-            const res = await fetch(url, {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
             });
             const data = await res.json();
-            
-            if (data.candidates) {
-                aiResultBox.innerText = data.candidates[0].content.parts[0].text;
-                status.innerText = "✨ แปลเสร็จสมบูรณ์";
-                copyBtn.style.display = 'flex';
-                saveBtn.style.display = 'flex';
-            } else {
-                throw new Error("API ขัดข้อง โปรดลองใหม่ภายหลัง");
-            }
-        } catch (err) {
-            aiResultBox.innerText = "เกิดข้อผิดพลาด: " + err.message;
-        }
+            document.getElementById('aiResult').innerText = data.candidates[0].content.parts[0].text;
+            document.getElementById('actionBtns').style.display = 'block';
+        } catch (e) { alert("Error: " + e.message); }
     };
 
-    // Copy Function
-    copyBtn.onclick = () => {
-        const combinedText = `ต้นฉบับ (${currentLang === 'zh' ? 'จีน' : 'อังกฤษ'}):\n${sourceBox.value}\n\nแปลและเกลาสำนวน (ไทย):\n${aiResultBox.innerText}`;
-        navigator.clipboard.writeText(combinedText);
-        const originalText = copyBtn.innerText;
-        copyBtn.innerText = "✅ คัดลอกแล้ว!";
-        setTimeout(() => copyBtn.innerText = originalText, 2000);
+    // Copy & Save
+    document.getElementById('copyBtn').onclick = () => {
+        const content = `Source: ${document.getElementById('sourceText').value}\n\nResult:\n${document.getElementById('aiResult').innerText}`;
+        navigator.clipboard.writeText(content);
+        alert("คัดลอกแล้ว!");
     };
 
-    // Save Function
-    saveBtn.onclick = () => {
-        push(vocabsRef, {
+    document.getElementById('saveBtn').onclick = () => {
+        const pName = playlistSelect.value;
+        push(ref(db, `data_by_playlist/${pName}`), {
             lang: currentLang,
-            original: sourceBox.value,
-            result: aiResultBox.innerText,
+            original: document.getElementById('sourceText').value,
+            result: document.getElementById('aiResult').innerText,
             date: new Date().toLocaleString()
         });
-        alert("บันทึกลงคลังสำเร็จ!");
-        saveBtn.style.display = 'none';
+        alert("บันทึกลง " + pName + " แล้ว!");
     };
 
-    // Load History
-    onValue(vocabsRef, (snapshot) => {
-        const list = document.getElementById('vocabList');
-        list.innerHTML = "";
+    // Render Playlists
+    onValue(ref(db, 'data_by_playlist'), (snapshot) => {
+        const container = document.getElementById('playlistContainer');
+        container.innerHTML = "";
         const data = snapshot.val();
         if (data) {
-            Object.keys(data).reverse().forEach(id => {
-                const item = data[id];
-                const div = document.createElement('div');
-                div.className = 'history-item';
-                div.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span class="tag ${item.lang === 'zh' ? 'tag-zh' : 'tag-en'}">${item.lang}</span>
-                        <div>
-                            <button class="btn-action-small" onclick="window.copyItem('${id}')">📋 คัดลอก</button>
-                            <button class="btn-action-small" style="color:#ff7675;" onclick="window.delItem('${id}')">ลบ</button>
-                        </div>
+            Object.keys(data).forEach(pName => {
+                const folder = document.createElement('div');
+                folder.className = 'folder-card';
+                folder.innerHTML = `
+                    <div class="folder-header" onclick="this.nextElementSibling.classList.toggle('open')">
+                        <span>📂 ${pName} (${Object.keys(data[pName]).length})</span>
+                        <span>▼</span>
                     </div>
-                    <div class="history-content">
-                        <div style="font-weight:600; color:var(--text-main);">${item.original}</div>
-                        <div style="color:var(--text-sub); white-space:pre-wrap; margin-top:8px;">${item.result}</div>
+                    <div class="folder-content">
+                        ${Object.keys(data[pName]).reverse().map(id => `
+                            <div class="vocab-item">
+                                <div style="font-weight:600; font-size:14px;">${data[pName][id].original}</div>
+                                <div style="font-size:13px; color:var(--text-sub); white-space:pre-wrap; margin-top:5px;">${data[pName][id].result}</div>
+                                <button onclick="window.delVocab('${pName}','${id}')" style="color:red; border:none; background:none; font-size:11px; cursor:pointer; padding:0; margin-top:5px;">ลบออก</button>
+                            </div>
+                        `).join('')}
                     </div>
                 `;
-                list.appendChild(div);
-                
-                // เก็บข้อมูลไว้สำหรับการคัดลอกรายชิ้น
-                if(!window.historyData) window.historyData = {};
-                window.historyData[id] = item;
+                container.appendChild(folder);
             });
         }
     });
 
-    window.copyItem = (id) => {
-        const item = window.historyData[id];
-        const text = `ต้นฉบับ: ${item.original}\nผลลัพธ์: ${item.result}`;
-        navigator.clipboard.writeText(text);
-        alert("คัดลอกรายการนี้แล้ว");
-    };
-
-    window.delItem = (id) => { if(confirm('ยืนยันการลบ?')) remove(ref(db, `dual_language_vocabs/${id}`)); };
+    window.delVocab = (pName, id) => { if(confirm('ลบคำนี้?')) remove(ref(db, `data_by_playlist/${pName}/${id}`)); };
 </script>
 
 </body>
