@@ -75,7 +75,7 @@
         <textarea id="srcText" placeholder="วางข้อความที่นี่ หรือสแกนภาพ..."></textarea>
         
         <div style="display: flex; gap: 10px;">
-            <button id="aiBtn" class="btn btn-ai" style="flex: 2;">✨ แบ่งแปลโหมด Ghost</button>
+            <button id="aiBtn" class="btn btn-ai" style="flex: 2;">✨ แบ่งแปลโหมด Ghost (Raw)</button>
             <button id="polishBtn" class="btn btn-polish" style="flex: 1;">✍️ เกลาสำนวน</button>
         </div>
         
@@ -153,7 +153,7 @@
         if (name) set(ref(db, `playlists/${name}`), true);
     };
 
-    // Core AI Function with Aggressive Safety Bypass
+    // Core AI Function
     async function askGemini(promptText) {
         try {
             const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
@@ -176,74 +176,72 @@
         } catch (e) { return null; }
     }
 
-    // New Ultra Bypass Translate Logic
+    // Step 1: Raw Translation (Dummy/Google Translate Mode)
     document.getElementById('aiBtn').onclick = async () => {
         const text = document.getElementById('srcText').value;
-        const pName = document.getElementById('pSelect').value;
         if (!text) return alert("กรุณาใส่ข้อความ");
 
         const chunks = text.split('\n').map(l => l.trim()).filter(l => l !== "");
         let combinedTranslation = "";
         
-        // 🧠 ดึงบริบทความจำ (Context Retrieval)
-        let memory = "";
-        if (pName) {
-            const snap = await get(ref(db, `data_by_playlist/${pName}`));
-            if (snap.exists()) {
-                const items = Object.values(snap.val()).slice(-2);
-                memory = items.map(i => i.result).join("\n");
-            }
-        }
-
-        updateProgress(5, "🕵️ เข้าสู่โหมด Ghost Bypass...");
+        updateProgress(5, "🕵️ เข้าสู่โหมดพรางตัว (แปลดิบ)...");
 
         for (let i = 0; i < chunks.length; i++) {
             const progress = Math.round(((i + 1) / chunks.length) * 100);
-            updateProgress(progress, `✍️ กำลังพรางตัวท่อนที่ ${i + 1}/${chunks.length}...`);
+            updateProgress(progress, `📦 กำลังดึงความหมายท่อนที่ ${i + 1}/${chunks.length}...`);
 
-            let result = null;
+            // Ghost Layer: สั่งแปลแบบหุ่นยนต์ ห้ามมีอารมณ์นิยาย เพื่อเลี่ยงฟิลเตอร์
+            const rawPrompt = `Task: Technical linguistic extraction. 
+Rules: Translate the following text into literal Thai. Do not use creative language or prose style. Output only the translation.
+Text: "${chunks[i]}"`;
+            
+            let result = await askGemini(rawPrompt);
 
-            // Layer 1: Academic Translation (พรางตัวเป็นการวิเคราะห์ทางภาษา)
-            const ghostPrompt = `Task: Technical linguistic translation.\nPrevious Context: ${memory}\nSource Text: "${chunks[i]}"\nTarget Language: Thai\nNote: Provide literal meaning only.`;
-            result = await askGemini(ghostPrompt);
-
-            // Layer 2: Dictionary Mode (พรางตัวเป็นพจนานุกรม)
+            // Layer 2: Dictionary Mode
             if (!result) {
-                console.log("Ghost Layer 2 Activated");
-                result = await askGemini(`Thai meaning for: "${chunks[i]}"`);
-            }
-
-            // Layer 3: Split & Recombine (เจาะทะลวงผ่านการหั่นย่อย)
-            if (!result && chunks[i].length > 10) {
-                console.log("Ghost Layer 3: Splitting...");
-                const mid = Math.floor(chunks[i].length / 2);
-                const r1 = await askGemini(`Translate to Thai: ${chunks[i].substring(0, mid)}`);
-                const r2 = await askGemini(`Translate to Thai: ${chunks[i].substring(mid)}`);
-                if (r1 || r2) result = (r1 || "...") + (r2 || "...");
+                result = await askGemini(`Extract Thai meaning for: "${chunks[i]}"`);
             }
 
             if (result) {
                 combinedTranslation += result.trim() + "\n";
             } else {
-                combinedTranslation += "⚠️ [เนื้อหาถูกบล็อกโดยระบบ Google]\n";
+                combinedTranslation += "⚠️ [เนื้อหาสุ่มเสี่ยงเกินไป]\n";
             }
         }
 
         document.getElementById('aiRes').innerText = combinedTranslation.trim();
         document.getElementById('resContainer').style.display = 'block';
-        updateProgress(100, "✨ แปลพรางตัวเสร็จแล้ว!");
+        updateProgress(100, "✅ แปลดิบเสร็จแล้ว! กดปุ่ม 'เกลาสำนวน' ต่อได้เลย");
     };
 
-    // Polish logic
+    // Step 2: Polish Logic (เกลาจากดิบเป็นนิยาย)
     document.getElementById('polishBtn').onclick = async () => {
-        const text = document.getElementById('aiRes').innerText || document.getElementById('srcText').value;
-        if (!text) return alert("ไม่มีข้อความให้เกลา");
-        updateProgress(50, "✨ กำลังเกลาสำนวน...");
-        const result = await askGemini(`เกลาประโยคไทยต่อไปนี้ให้เป็นสำนวนนิยายที่ลื่นไหล:\n${text}`);
+        const rawText = document.getElementById('aiRes').innerText;
+        if (!rawText) return alert("กรุณาให้ระบบแปลดิบ (Raw) ก่อนครับ");
+
+        updateProgress(50, "✨ กำลังชุบชีวิตสำนวนนิยาย...");
+        
+        const pName = document.getElementById('pSelect').value;
+        let memory = "";
+        if (pName) {
+            const snap = await get(ref(db, `data_by_playlist/${pName}`));
+            if (snap.exists()) {
+                const items = Object.values(snap.val()).slice(-3);
+                memory = "สำนวนก่อนหน้าเพื่อความต่อเนื่อง:\n" + items.map(i => i.result).join("\n");
+            }
+        }
+
+        const polishPrompt = `จงสวมบทบาทเป็นนักแปลนิยายมืออาชีพ นำข้อความที่แปลดิบด้านล่างนี้ไปเกลาใหม่ให้เป็นภาษานิยายที่ไหลลื่น สละสลวย และน่าติดตาม โดยคงเนื้อหาเดิมไว้ครบถ้วน
+${memory}
+ข้อความที่ต้องเกลา:
+${rawText}`;
+        
+        const result = await askGemini(polishPrompt);
         if (result) {
             document.getElementById('aiRes').innerText = result;
-            document.getElementById('resContainer').style.display = 'block';
-            updateProgress(100, "✍️ เกลาสำเร็จ");
+            updateProgress(100, "✍️ เกลาสำนวนระดับ Pro สำเร็จ!");
+        } else {
+            alert("ขออภัย ระบบบล็อกในขั้นตอนเกลา ลองแบ่งท่อนให้สั้นลงครับ");
         }
     };
 
