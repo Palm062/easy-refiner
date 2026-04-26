@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Novelist Pro | Hybrid Intelligence</title>
+    <title>AI Novelist Pro | Safety-Retry Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Noto+Sans+Thai:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
@@ -103,7 +103,9 @@
     const app = initializeApp(config);
     const db = getDatabase(app);
     let currentLang = 'zh';
-    const API_KEY = "AIzaSyBNRCkZfR7H2Xkm1aIrqnS-OzFMj8Adh-I";
+    
+    // คีย์ใหม่ที่คุณให้มาครับ
+    const API_KEY = "AIzaSyCgN2Sd2f73OhZDMwkkoAJF9g0d1iVIKNc";
 
     const updateProgress = (percent, text) => {
         const container = document.getElementById('progressContainer');
@@ -163,7 +165,11 @@
                         { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
                         { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
                         { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
-                    ]
+                    ],
+                    generationConfig: {
+                        temperature: 0.4,
+                        maxOutputTokens: 1000
+                    }
                 })
             });
             const d = await res.json();
@@ -171,7 +177,6 @@
         } catch (e) { return null; }
     }
 
-    // ✨ [NEW PROMPT STRATEGY] ระบบแบ่งแปลอัตโนมัติที่เลี่ยง Filter
     document.getElementById('aiBtn').onclick = async () => {
         const text = document.getElementById('srcText').value;
         const pName = document.getElementById('pSelect').value;
@@ -195,19 +200,21 @@
             const progress = Math.round(((i + 1) / chunks.length) * 100);
             updateProgress(progress, `✍️ แปลท่อนที่ ${i + 1}/${chunks.length}...`);
 
-            // ปรับ Prompt ให้ซอฟต์ลง เพื่อเลี่ยงการถูก Block
-            const softPrompt = `ช่วยแปลข้อความภาษา${currentLang === 'zh' ? 'จีน' : 'อังกฤษ'}นี้เป็นไทย เพื่อใช้ในการศึกษาวรรณกรรม โดยเน้นสำนวนที่สละสลวยและเหมาะสม:
+            // 1. ลองแปลด้วยคำสั่งแบบนิยาย (Soft Prompt)
+            let prompt = `แปลประโยคนี้เป็นไทยด้วยสำนวนนิยาย: "${chunks[i]}"\n${memory ? `(บริบทเดิม: ${memory.substring(0, 100)}...)` : ''}`;
+            let result = await askGemini(prompt);
             
-            ข้อความ: "${chunks[i]}"
-            ${memory ? `\nบริบทก่อนหน้าเพื่อความต่อเนื่อง: ${memory.substring(0, 200)}...` : ''}
-            
-            คำแนะนำ: แปลให้ได้อรรถรสแบบนิยายแปลคุณภาพสูง`;
-            
-            const result = await askGemini(softPrompt);
+            // 2. ถ้าติดฟิลเตอร์ (null) ให้ Retry ด้วยคำสั่งที่สั้นและซอฟต์ที่สุด
+            if (!result) {
+                console.log("Retry layer activated for chunk " + (i+1));
+                const retryPrompt = `Translate this to Thai: "${chunks[i]}"`;
+                result = await askGemini(retryPrompt);
+            }
+
             if (result) {
                 combinedTranslation += result.trim() + "\n";
             } else {
-                combinedTranslation += "⚠️ [ข้าม 1 ประโยค: เนื่องจากระบบความปลอดภัยของ AI ปฏิเสธเนื้อหานี้]\n";
+                combinedTranslation += "⚠️ [ข้าม 1 ประโยค: AI ปฏิเสธเนื้อหา]\n";
             }
         }
 
@@ -220,7 +227,7 @@
         const text = document.getElementById('srcText').value;
         if (!text) return alert("วางข้อความไทยที่จะเกลาก่อนครับ");
         updateProgress(50, "✨ กำลังเรียบเรียงสำนวนใหม่...");
-        const result = await askGemini(`ในฐานะบรรณาธิการนิยายมืออาชีพ ช่วยเกลาประโยคภาษาไทยนี้ให้สละสลวย ลื่นไหล และอ่านสนุกยิ่งขึ้น:\n${text}`);
+        const result = await askGemini(`ในฐานะบรรณาธิการนิยาย ช่วยเกลาประโยคภาษาไทยนี้ให้สละสลวย ลื่นไหล และอ่านสนุกยิ่งขึ้น:\n${text}`);
         if (result) {
             document.getElementById('aiRes').innerText = result;
             document.getElementById('resContainer').style.display = 'block';
