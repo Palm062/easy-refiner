@@ -161,39 +161,51 @@
         if (name) set(ref(db, `playlists/${name}`), true);
     };
 
-    // แปลและเกลา + Progress
+    // แปลและเกลา + Progress (FIXED VERSION)
     document.getElementById('aiBtn').onclick = async () => {
         const text = document.getElementById('srcText').value;
         const pName = document.getElementById('pSelect').value;
-        if (!text) return;
+        if (!text) { alert("กรุณาสแกนรูปหรือพิมพ์ข้อความก่อนครับ"); return; }
         
         updateProgress(30, pName ? `📖 กำลังดึงความจำจากเรื่อง ${pName}...` : "💬 กำลังเตรียมข้อมูลแปล...");
         
         let memory = "";
-        if (pName) {
-            const snap = await get(ref(db, `data_by_playlist/${pName}`));
-            if (snap.exists()) {
-                const items = Object.values(snap.val()).slice(-2);
-                memory = items.map(i => `บริบทตอนก่อน: ${i.result}`).join("\n");
-            }
-        }
-        
-        updateProgress(60, "🤖 AI กำลังเรียบเรียงสำนวนนิยาย...");
-
         try {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyBNRCkZfR7H2Xkm1aIrqnS-OzFMj8Adh-I`, {
+            if (pName) {
+                const snap = await get(ref(db, `data_by_playlist/${pName}`));
+                if (snap.exists()) {
+                    const items = Object.values(snap.val()).slice(-2);
+                    memory = items.map(i => `บริบทตอนก่อน: ${i.result}`).join("\n");
+                }
+            }
+            
+            updateProgress(60, "🤖 AI กำลังเรียบเรียงสำนวนนิยาย...");
+
+            const API_KEY = "AIzaSyBNRCkZfR7H2Xkm1aIrqnS-OzFMj8Adh-I";
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ contents: [{ parts: [{ text: `คุณคือนักแปลนิยายมืออาชีพ ${pName ? `แปลเรื่อง ${pName}` : ''} บริบท: ${memory} \n แปลและเกลาให้เป็นสำนวนนิยาย: ${text}` }] }] })
             });
+
             const d = await res.json();
-            const out = d.candidates[0].content.parts[0].text;
-            document.getElementById('aiRes').innerText = out;
-            document.getElementById('resContainer').style.display = 'block';
-            updateProgress(100, "✨ แปลและเกลาสำนวนเสร็จสมบูรณ์");
+
+            // ตรวจสอบโครงสร้างข้อมูลเพื่อป้องกัน Error Reading '0'
+            if (d && d.candidates && d.candidates[0] && d.candidates[0].content && d.candidates[0].content.parts) {
+                const out = d.candidates[0].content.parts[0].text;
+                document.getElementById('aiRes').innerText = out;
+                document.getElementById('resContainer').style.display = 'block';
+                updateProgress(100, "✨ แปลและเกลาสำนวนเสร็จสมบูรณ์");
+            } else {
+                console.error("AI Error Details:", d);
+                updateProgress(0, "⚠️ AI ปฏิเสธการแปล");
+                alert("ไม่สามารถแปลได้: AI อาจปฏิเสธเนื้อหาส่วนนี้ หรือระบบขัดข้องชั่วคราว");
+            }
+
         } catch (e) { 
+            console.error("System Error:", e);
             updateProgress(0, "❌ เกิดข้อผิดพลาด");
-            alert(e.message); 
+            alert("เกิดข้อผิดพลาดทางระบบ: " + e.message); 
         }
     };
 
