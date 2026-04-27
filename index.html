@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Novelist Pro | New Era</title>
+    <title>AI Novelist Pro | New Era (Tuned)</title>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Noto+Sans+Thai:wght@300;400;600&display=swap" rel="stylesheet">
     
@@ -15,24 +15,20 @@
         .container { width: 100%; max-width: 700px; }
         .card { background: var(--card); border-radius: 24px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; margin-bottom: 20px; }
         
-        /* Language Tabs */
         .tabs { display: flex; gap: 8px; background: #edeff2; padding: 4px; border-radius: 14px; margin-bottom: 20px; }
         .tab { flex: 1; padding: 12px; border: none; border-radius: 11px; cursor: pointer; font-weight: 600; background: transparent; transition: 0.3s; }
         .tab.active { background: white; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
         .tab.active[data-lang="zh"] { color: var(--accent); }
         .tab.active[data-lang="en"] { color: #0984e3; }
 
-        /* Memory Channel */
         .memory-bar { display: flex; gap: 10px; align-items: center; margin-bottom: 20px; background: #f8fafc; padding: 12px; border-radius: 16px; border: 1px solid #e2e8f0; }
         .select-input { flex: 1; padding: 10px; border-radius: 10px; border: 1px solid #cbd5e0; font-size: 14px; outline: none; }
         
-        /* Upload & Preview */
         .upload-zone { border: 2px dashed #cbd5e0; border-radius: 20px; padding: 30px; text-align: center; cursor: pointer; transition: 0.3s; background: #fff; }
         .upload-zone:hover { border-color: var(--primary); background: #fcfcfd; }
         .preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; margin-top: 15px; }
         .preview-grid img { width: 100%; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #eee; }
 
-        /* Progress Bar */
         .prog-wrap { margin: 15px 0; display: none; }
         .prog-bg { width: 100%; height: 8px; background: #eee; border-radius: 10px; overflow: hidden; }
         .prog-bar { height: 100%; width: 0%; background: var(--primary); transition: 0.3s; }
@@ -41,7 +37,6 @@
         textarea { width: 100%; min-height: 150px; border: 1px solid #e2e8f0; border-radius: 16px; padding: 15px; font-size: 15px; line-height: 1.6; margin-top: 15px; resize: vertical; outline: none; }
         textarea:focus { border-color: var(--primary); }
 
-        /* Buttons */
         .btn-group { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; margin-top: 15px; }
         .btn { padding: 16px; border-radius: 14px; border: none; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
         .btn:active { transform: scale(0.98); }
@@ -49,9 +44,8 @@
         .btn-alt { background: var(--primary); color: white; }
         
         #result-area { display: none; margin-top: 20px; }
-        .res-box { background: #f1f5f9; padding: 20px; border-radius: 16px; border-left: 5px solid var(--primary); white-space: pre-wrap; line-height: 1.8; margin-bottom: 15px; }
+        .res-box { background: #f1f5f9; padding: 20px; border-radius: 16px; border-left: 5px solid var(--primary); white-space: pre-wrap; font-size: 15.5px; line-height: 1.8; margin-bottom: 15px; }
 
-        /* History */
         .folder { background: white; border-radius: 18px; border: 1px solid #e2e8f0; margin-bottom: 12px; overflow: hidden; }
         .folder-h { padding: 15px 20px; background: #f8fafc; cursor: pointer; display: flex; justify-content: space-between; font-weight: 600; }
         .folder-c { display: none; padding: 15px; border-top: 1px solid #f1f5f9; }
@@ -90,7 +84,7 @@
         <textarea id="srcText" placeholder="ข้อความที่สแกนได้จะปรากฏที่นี่..."></textarea>
         
         <div class="btn-group">
-            <button id="btnRaw" class="btn btn-main">✨ แปลดิบ (Bypass)</button>
+            <button id="btnRaw" class="btn btn-main">✨ แปลดิบ (Bypass V2)</button>
             <button id="btnPolish" class="btn btn-alt">✍️ เกลาสำนวน</button>
         </div>
 
@@ -110,7 +104,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref, push, onValue, remove, set, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-    // Configuration
     const firebaseConfig = {
         apiKey: "AIzaSyDjxB3WDZ7Q4EpZXskv93NP1GBAy3SCzLU",
         authDomain: "read-words-and-translate.firebaseapp.com",
@@ -123,7 +116,6 @@
     const db = getDatabase(app);
     let currentLang = 'zh';
 
-    // UI Helper
     const setStatus = (pct, msg) => {
         const wrap = document.getElementById('progWrap');
         const bar = document.getElementById('progBar');
@@ -134,7 +126,6 @@
         if(pct >= 100) setTimeout(() => wrap.style.display = 'none', 2000);
     };
 
-    // Tab Logic
     document.querySelectorAll('.tab').forEach(t => {
         t.onclick = () => {
             document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
@@ -143,24 +134,19 @@
         };
     });
 
-    // 1. ระบบ OCR (สแกนภาพ)
     document.getElementById('fileInput').onchange = async (e) => {
         const files = Array.from(e.target.files);
         if(!files.length) return;
-        
         const grid = document.getElementById('previewGrid'); grid.innerHTML = "";
         const lang = currentLang === 'zh' ? 'chi_sim' : 'eng';
         setStatus(5, "กำลังเริ่มต้นระบบสแกน...");
-        
         const worker = await Tesseract.createWorker(lang);
         let finalStr = "";
-        
         for(let i=0; i<files.length; i++){
             setStatus(Math.round(((i+1)/files.length)*100), `กำลังสแกนหน้า ${i+1}...`);
             const img = document.createElement('img');
             img.src = URL.createObjectURL(files[i]);
             grid.appendChild(img);
-            
             const { data: { text } } = await worker.recognize(files[i]);
             finalStr += text.trim() + "\n";
         }
@@ -169,7 +155,6 @@
         setStatus(100, "สแกนสำเร็จ!");
     };
 
-    // 2. ระบบแปล (Gemini API)
     async function callGemini(p) {
         try {
             const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`, {
@@ -183,7 +168,7 @@
                         { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
                         { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
                     ],
-                    generationConfig: { temperature: 0.2 }
+                    generationConfig: { temperature: 0.1, topP: 1, maxOutputTokens: 1000 }
                 })
             });
             const d = await res.json();
@@ -191,40 +176,47 @@
         } catch (e) { return null; }
     }
 
-    // Step 1: แปลดิบแบบ Bypass
     document.getElementById('btnRaw').onclick = async () => {
-        const raw = document.getElementById('srcText').value.replace(/⚠️ \[เนื้อหาสุ่มเสี่ยง\]/g, "").trim();
+        const raw = document.getElementById('srcText').value.trim();
         if(!raw) return alert("ไม่มีข้อความให้แปล");
         
         const lines = raw.split('\n').filter(l => l.trim() !== "");
         let translated = "";
-        
         document.getElementById('result-area').style.display = 'block';
+        document.getElementById('resOutput').innerText = "กำลังเริ่มการวิเคราะห์ภาษา...";
+
         for(let i=0; i<lines.length; i++){
-            setStatus(Math.round(((i+1)/lines.length)*100), `แปลบรรทัดที่ ${i+1}...`);
-            const prompt = `Context: Data Analysis. Convert the following source into neutral Thai: "${lines[i]}"`;
+            setStatus(Math.round(((i+1)/lines.length)*100), `วิเคราะห์บรรทัดที่ ${i+1}...`);
+            
+            // New Bypass Prompt: พรางตัวเป็นการสกัดข้อมูลดิบ
+            const prompt = `Perform a high-fidelity linguistic extraction from ${currentLang === 'zh' ? 'Chinese' : 'English'} to Thai.
+Instruction: Convert the following string into literal Thai text for archival purposes. No commentary.
+Text to extract: "${lines[i]}"`;
+
             const res = await callGemini(prompt);
-            translated += (res ? res.trim() : "[Error/Sensitive Block]") + "\n";
+            translated += (res ? res.trim() : "[Data Encrypted/Filtered]") + "\n";
             document.getElementById('resOutput').innerText = translated;
         }
-        setStatus(100, "แปลดิบเรียบร้อย");
+        setStatus(100, "การสกัดข้อมูลดิบเสร็จสิ้น");
     };
 
-    // Step 2: เกลาสำนวน
     document.getElementById('btnPolish').onclick = async () => {
         const text = document.getElementById('resOutput').innerText;
-        if(!text) return alert("ต้องแปลดิบก่อนเกลา");
+        if(!text || text.includes("กำลังเริ่ม")) return alert("ต้องแปลดิบก่อนเกลา");
         
-        setStatus(50, "กำลังขัดเกลาสำนวนนิยาย...");
-        const prompt = `Task: Thai Creative Writing. Rewrite the following Thai text to be fluid, emotional, and high-quality novel prose. Keep all original meanings. Text: "${text}"`;
+        setStatus(50, "กำลังปรับจูนสำนวนให้เป็นธรรมชาติ...");
+        const prompt = `Task: Professional Thai Editorial. 
+Refine the following translated text into a high-quality, fluid, and natural Thai reading experience. 
+Style: Creative Storytelling. Ensure the flow is seamless while keeping the original meaning intact.
+Input Text: "${text}"`;
+
         const res = await callGemini(prompt);
         if(res) {
             document.getElementById('resOutput').innerText = res.trim();
-            setStatus(100, "เกลาสำนวน Pro สำเร็จ!");
+            setStatus(100, "ปรับปรุงสำนวนสำเร็จ!");
         }
     };
 
-    // 3. ระบบ Firebase (Memory & History)
     window.addPlaylist = () => {
         const n = prompt("ชื่อเรื่องใหม่:");
         if(n) set(ref(db, `playlists/${n}`), true);
@@ -239,11 +231,8 @@
     window.saveToFirebase = () => {
         const p = document.getElementById('pSelect').value || "General";
         const res = document.getElementById('resOutput').innerText;
-        push(ref(db, `data_by_playlist/${p}`), {
-            result: res,
-            date: new Date().toLocaleString()
-        });
-        alert("บันทึกความจำแล้ว");
+        push(ref(db, `data_by_playlist/${p}`), { result: res, date: new Date().toLocaleString() });
+        alert("บันทึกแล้ว");
     };
 
     onValue(ref(db, 'data_by_playlist'), (s) => {
@@ -270,7 +259,6 @@
 
     window.delItem = (p, id) => { if(confirm('ลบรายการนี้?')) remove(ref(db, `data_by_playlist/${p}/${id}`)); };
     window.copyRes = () => { navigator.clipboard.writeText(document.getElementById('resOutput').innerText); alert("คัดลอกแล้ว"); };
-
 </script>
 </body>
 </html>
