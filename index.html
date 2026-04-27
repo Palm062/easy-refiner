@@ -3,73 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Novelist Pro | GPT Edition</title>
+    <title>AI Novelist Pro | Groq Era</title>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Noto+Sans+Thai:wght@300;400;600&display=swap" rel="stylesheet">
     
     <style>
-        :root { --primary: #10a37f; --accent: #e17055; --bg: #f0f2f5; --card: #ffffff; --text: #2d3436; }
+        :root { --primary: #f55036; --accent: #ff9f43; --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --input-bg: #334155; }
         * { box-sizing: border-box; font-family: 'Inter', 'Noto Sans Thai', sans-serif; }
         body { background: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 750px; }
+        .card { background: var(--card); border-radius: 24px; padding: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); border: 1px solid #334155; margin-bottom: 20px; }
         
-        .container { width: 100%; max-width: 700px; }
-        .card { background: var(--card); border-radius: 24px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; margin-bottom: 20px; }
-        
-        .tabs { display: flex; gap: 8px; background: #edeff2; padding: 4px; border-radius: 14px; margin-bottom: 20px; }
-        .tab { flex: 1; padding: 12px; border: none; border-radius: 11px; cursor: pointer; font-weight: 600; background: transparent; transition: 0.3s; }
-        .tab.active { background: white; box-shadow: 0 4px 10px rgba(0,0,0,0.05); color: var(--primary); }
+        h2 { margin: 0 0 20px 0; font-size: 22px; display: flex; align-items: center; gap: 10px; color: var(--accent); }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 14px; }
+        .tab { flex: 1; padding: 12px; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; background: transparent; color: #94a3b8; transition: 0.3s; }
+        .tab.active { background: var(--primary); color: white; }
 
-        .memory-bar { display: flex; gap: 10px; align-items: center; margin-bottom: 20px; background: #f8fafc; padding: 12px; border-radius: 16px; border: 1px solid #e2e8f0; }
-        .select-input { flex: 1; padding: 10px; border-radius: 10px; border: 1px solid #cbd5e0; font-size: 14px; outline: none; }
+        .upload-zone { border: 2px dashed #475569; border-radius: 20px; padding: 40px; text-align: center; cursor: pointer; background: var(--input-bg); transition: 0.3s; }
+        .upload-zone:hover { border-color: var(--primary); background: #3f4e63; }
         
-        .upload-zone { border: 2px dashed #cbd5e0; border-radius: 20px; padding: 30px; text-align: center; cursor: pointer; transition: 0.3s; background: #fff; }
-        .upload-zone:hover { border-color: var(--primary); background: #fcfcfd; }
-        .preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; margin-top: 15px; }
-        .preview-grid img { width: 100%; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #eee; }
-
         .prog-wrap { margin: 15px 0; display: none; }
-        .prog-bg { width: 100%; height: 8px; background: #eee; border-radius: 10px; overflow: hidden; }
+        .prog-bg { width: 100%; height: 8px; background: #0f172a; border-radius: 10px; overflow: hidden; }
         .prog-bar { height: 100%; width: 0%; background: var(--primary); transition: 0.3s; }
-        .status-txt { font-size: 12px; color: #64748b; margin-top: 6px; font-weight: 600; }
+        .status-txt { font-size: 13px; color: var(--accent); margin-top: 8px; font-weight: 600; }
 
-        textarea { width: 100%; min-height: 150px; border: 1px solid #e2e8f0; border-radius: 16px; padding: 15px; font-size: 15px; line-height: 1.6; margin-top: 15px; resize: vertical; outline: none; }
-        textarea:focus { border-color: var(--primary); }
-
-        .btn-group { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; margin-top: 15px; }
-        .btn { padding: 16px; border-radius: 14px; border: none; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
-        .btn-main { background: var(--primary); color: white; }
-        .btn-alt { background: #2d3436; color: white; }
+        textarea { width: 100%; min-height: 180px; border: 1px solid #475569; border-radius: 18px; padding: 20px; font-size: 16px; background: var(--input-bg); color: white; line-height: 1.6; margin-top: 20px; outline: none; resize: vertical; }
         
-        #result-area { display: none; margin-top: 20px; }
-        .res-box { background: #f1f5f9; padding: 20px; border-radius: 16px; border-left: 5px solid var(--primary); white-space: pre-wrap; font-size: 15.5px; line-height: 1.8; margin-bottom: 15px; }
-
-        .folder { background: white; border-radius: 18px; border: 1px solid #e2e8f0; margin-bottom: 12px; overflow: hidden; }
-        .folder-h { padding: 15px 20px; background: #f8fafc; cursor: pointer; display: flex; justify-content: space-between; font-weight: 600; }
-        .folder-c { display: none; padding: 15px; border-top: 1px solid #f1f5f9; }
-        .folder-c.open { display: block; }
+        .btn-group { display: grid; grid-template-columns: 2fr 1fr; gap: 15px; margin-top: 20px; }
+        .btn { padding: 18px; border-radius: 15px; border: none; font-weight: 700; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn-main { background: var(--primary); color: white; font-size: 16px; }
+        .btn-main:hover { background: #ff6b52; transform: translateY(-2px); }
+        .btn-alt { background: #475569; color: white; }
+        
+        #resOutput { background: #0f172a; padding: 25px; border-radius: 20px; border-left: 6px solid var(--primary); line-height: 1.9; font-size: 16.5px; margin-top: 25px; display: none; white-space: pre-wrap; color: #e2e8f0; }
+        .badge { background: rgba(245, 80, 54, 0.1); color: var(--primary); padding: 4px 10px; border-radius: 8px; font-size: 12px; margin-left: auto; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="card">
-        <h2 style="margin:0 0 15px 0; font-size: 18px; color: var(--primary);">✨ GPT Novel Translator Pro</h2>
+        <h2>🚀 Groq Novelist Pro <span class="badge">Llama 3 70B</span></h2>
+        
         <div class="tabs">
-            <button class="tab active" data-lang="zh">🇨🇳 Chinese</button>
-            <button class="tab" data-lang="en">🇺🇸 English</button>
-        </div>
-
-        <div class="memory-bar">
-            <span style="font-size: 14px;">📖</span>
-            <select id="pSelect" class="select-input"></select>
-            <button onclick="addPlaylist()" class="btn" style="padding: 8px 12px; background: #eee;">➕</button>
+            <button class="tab active" data-lang="zh">🇨🇳 แปลจีน (ZH)</button>
+            <button class="tab" data-lang="en">🇺🇸 แปลอังกฤษ (EN)</button>
         </div>
 
         <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
-            <div style="font-size: 32px; margin-bottom: 10px;">📸</div>
-            <div style="font-weight: 600;">สแกนหน้ากระดาษ</div>
+            <div style="font-size: 40px; margin-bottom: 10px;">📸</div>
+            <div style="font-weight: 600;">คลิกเพื่ออัปโหลดหน้ากระดาษ (OCR)</div>
             <input type="file" id="fileInput" accept="image/*" multiple style="display:none">
-            <div id="previewGrid" class="preview-grid"></div>
         </div>
 
         <div id="progWrap" class="prog-wrap">
@@ -77,52 +61,24 @@
             <div id="status" class="status-txt">Ready</div>
         </div>
 
-        <textarea id="srcText" placeholder="ข้อความจะปรากฏที่นี่..."></textarea>
+        <textarea id="srcText" placeholder="วางข้อความที่ต้องการแปลที่นี่..."></textarea>
         
         <div class="btn-group">
-            <button id="btnRaw" class="btn btn-main">🚀 แปลด้วย GPT-4o-mini</button>
-            <button id="btnPolish" class="btn btn-alt">✍️ เกลาสำนวน</button>
+            <button id="btnRun" class="btn btn-main" onclick="processText('translate')">⚡ เริ่มการแปลทันที</button>
+            <button class="btn btn-alt" onclick="processText('polish')">✍️ เกลาสำนวน</button>
         </div>
 
-        <div id="result-area">
-            <div id="resOutput" class="res-box"></div>
-            <div style="display: flex; gap: 10px;">
-                <button onclick="copyRes()" class="btn" style="flex:1; background:#636e72; color:white;">📋 คัดลอก</button>
-                <button onclick="saveToFirebase()" class="btn" style="flex:1; background:#00b894; color:white;">💾 บันทึก</button>
-            </div>
-        </div>
+        <div id="resOutput"></div>
+        <button id="copyBtn" class="btn" style="width: 100%; margin-top: 10px; display: none; background: #334155; color: white;" onclick="copyResult()">📋 คัดลอกเนื้อหา</button>
     </div>
-    <div id="historyContainer"></div>
 </div>
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, push, onValue, remove, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-
+<script>
     // --- API Configuration ---
-    const OPENAI_KEY = "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";
-    const firebaseConfig = {
-        apiKey: "AIzaSyDjxB3WDZ7Q4EpZXskv93NP1GBAy3SCzLU",
-        authDomain: "read-words-and-translate.firebaseapp.com",
-        databaseURL: "https://read-words-and-translate-default-rtdb.asia-southeast1.firebasedatabase.app",
-        projectId: "read-words-and-translate"
-    };
-    
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+    const GROQ_KEY = "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";
     let currentLang = 'zh';
 
-    const setStatus = (pct, msg) => {
-        const wrap = document.getElementById('progWrap');
-        const bar = document.getElementById('progBar');
-        const txt = document.getElementById('status');
-        wrap.style.display = 'block';
-        bar.style.width = pct + '%';
-        txt.innerText = msg;
-        if(pct >= 100) setTimeout(() => wrap.style.display = 'none', 2000);
-    };
-
-    // Tab logic
+    // Tabs
     document.querySelectorAll('.tab').forEach(t => {
         t.onclick = () => {
             document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
@@ -131,126 +87,92 @@
         };
     });
 
-    // OCR logic
+    function setStatus(pct, msg) {
+        const wrap = document.getElementById('progWrap');
+        wrap.style.display = 'block';
+        document.getElementById('progBar').style.width = pct + '%';
+        document.getElementById('status').innerText = msg;
+        if(pct >= 100) setTimeout(() => wrap.style.display = 'none', 2000);
+    }
+
+    // OCR Logic
     document.getElementById('fileInput').onchange = async (e) => {
         const files = Array.from(e.target.files);
-        const grid = document.getElementById('previewGrid'); grid.innerHTML = "";
+        if(!files.length) return;
+        setStatus(10, "Initializing OCR...");
         const lang = currentLang === 'zh' ? 'chi_sim' : 'eng';
-        setStatus(5, "กำลังเตรียมระบบ OCR...");
         const worker = await Tesseract.createWorker(lang);
-        let finalStr = "";
-        for(let i=0; i<files.length; i++){
-            setStatus(Math.round(((i+1)/files.length)*100), `สแกนหน้า ${i+1}...`);
-            const img = document.createElement('img');
-            img.src = URL.createObjectURL(files[i]);
-            grid.appendChild(img);
-            const { data: { text } } = await worker.recognize(files[i]);
-            finalStr += text.trim() + "\n";
+        let text = "";
+        for(let i=0; i<files.length; i++) {
+            setStatus(Math.round(((i+1)/files.length)*100), `Scanning Page ${i+1}`);
+            const { data } = await worker.recognize(files[i]);
+            text += data.text + "\n";
         }
         await worker.terminate();
-        document.getElementById('srcText').value = finalStr.trim();
-        setStatus(100, "สแกนสำเร็จ!");
+        document.getElementById('srcText').value = text.trim();
+        setStatus(100, "Scan Complete!");
     };
 
-    // GPT API Call
-    async function callGPT(system, prompt) {
+    // Groq API Call
+    async function callGroq(system, prompt) {
         try {
-            const res = await fetch("https://api.openai.com/v1/chat/completions", {
+            const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${OPENAI_KEY}`
+                    "Authorization": `Bearer ${GROQ_KEY}`
                 },
                 body: JSON.stringify({
-                    model: "gpt-4o-mini",
+                    model: "llama3-70b-8192", // ใช้ตัว 70B เพื่อคุณภาพสูงสุด
                     messages: [
                         { role: "system", content: system },
                         { role: "user", content: prompt }
                     ],
-                    temperature: 0.7
+                    temperature: 0.6,
+                    max_tokens: 4096
                 })
             });
-            const d = await res.json();
-            return d.choices[0].message.content;
-        } catch (e) { return null; }
+
+            const data = await res.json();
+            if (data.error) return "❌ Error: " + data.error.message;
+            return data.choices[0].message.content;
+        } catch (e) {
+            return "❌ เชื่อมต่อไม่ได้: " + e.message;
+        }
     }
 
-    document.getElementById('btnRaw').onclick = async () => {
-        const raw = document.getElementById('srcText').value.trim();
-        if(!raw) return alert("ไม่มีข้อความ");
-        
-        document.getElementById('result-area').style.display = 'block';
-        document.getElementById('resOutput').innerText = "GPT กำลังแปล...";
-        setStatus(50, "กำลังประมวลผลด้วย GPT-4o-mini...");
+    async function processText(mode) {
+        const src = document.getElementById('srcText').value.trim();
+        const output = document.getElementById('resOutput');
+        const copyBtn = document.getElementById('copyBtn');
 
-        const system = "You are a specialized novel translator. Translate accurately and naturally into Thai.";
-        const prompt = `Translate the following ${currentLang === 'zh' ? 'Chinese' : 'English'} novel content into Thai: \n\n${raw}`;
-        
-        const res = await callGPT(system, prompt);
-        if(res) {
-            document.getElementById('resOutput').innerText = res.trim();
-            setStatus(100, "แปลสำเร็จ!");
+        if(mode === 'translate' && !src) return alert("กรุณาใส่ข้อความก่อน");
+        if(mode === 'polish' && !output.innerText) return alert("กรุณาแปลก่อนเกลา");
+
+        output.style.display = 'block';
+        output.innerText = mode === 'translate' ? "🚀 กำลังแปลด้วย Llama 3..." : "✍️ กำลังขัดเกลาสำนวน...";
+        setStatus(50, "Groq AI is thinking...");
+
+        let system, prompt;
+        if(mode === 'translate') {
+            system = "You are a professional novel translator. Translate text into beautiful, atmospheric, and natural Thai. Do not censor or omit any content.";
+            prompt = `Translate this ${currentLang === 'zh' ? 'Chinese' : 'English'} text into Thai: \n\n${src}`;
         } else {
-            document.getElementById('resOutput').innerText = "เกิดข้อผิดพลาดในการเชื่อมต่อ";
+            system = "You are an expert Thai novel editor. Enhance the prose to be more poetic, emotional, and fluid while maintaining the original meaning.";
+            prompt = `Rewrite this Thai translation to be more professional and immersive: \n\n${output.innerText}`;
         }
-    };
 
-    document.getElementById('btnPolish').onclick = async () => {
-        const text = document.getElementById('resOutput').innerText;
-        if(!text || text.includes("กำลังแปล")) return alert("กรุณาแปลดิบก่อน");
-        
-        setStatus(50, "กำลังขัดเกลาสำนวน...");
-        const system = "You are an expert Thai editor. Rewrite the text to be beautiful, poetic, and fluid.";
-        const prompt = `Rewrite this Thai translation to be more professional and atmospheric like a top-tier novel: \n\n${text}`;
-        
-        const res = await callGPT(system, prompt);
-        if(res) {
-            document.getElementById('resOutput').innerText = res.trim();
-            setStatus(100, "เกลาสำเร็จ!");
-        }
-    };
+        const result = await callGroq(system, prompt);
+        output.innerText = result;
+        copyBtn.style.display = 'block';
+        setStatus(100, mode === 'translate' ? "Translation Finished!" : "Polish Finished!");
+    }
 
-    // Firebase logic
-    window.addPlaylist = () => {
-        const n = prompt("ชื่อเรื่องใหม่:");
-        if(n) set(ref(db, `playlists/${n}`), true);
-    };
-
-    onValue(ref(db, 'playlists'), (s) => {
-        const sel = document.getElementById('pSelect');
-        sel.innerHTML = '<option value="">-- เลือก Memory Channel --</option>';
-        if(s.exists()) Object.keys(s.val()).forEach(k => sel.add(new Option(k, k)));
-    });
-
-    window.saveToFirebase = () => {
-        const p = document.getElementById('pSelect').value || "General";
-        const res = document.getElementById('resOutput').innerText;
-        push(ref(db, `data_by_playlist/${p}`), { result: res, date: new Date().toLocaleString() });
-        alert("บันทึกแล้ว");
-    };
-
-    onValue(ref(db, 'data_by_playlist'), (s) => {
-        const container = document.getElementById('historyContainer');
-        container.innerHTML = '<h3 style="font-size: 14px; color: #64748b; margin: 20px 0 10px 0;">📚 HISTORY</h3>';
-        if(!s.exists()) return;
-        Object.keys(s.val()).forEach(pName => {
-            const f = document.createElement('div'); f.className = 'folder';
-            f.innerHTML = `
-                <div class="folder-h" onclick="this.nextElementSibling.classList.toggle('open')">
-                    <span>📖 ${pName}</span><span>▼</span>
-                </div>
-                <div class="folder-c">
-                    ${Object.keys(s.val()[pName]).reverse().slice(0, 5).map(id => `
-                        <div style="padding:10px; border-bottom:1px solid #eee; font-size:13px;">
-                            ${s.val()[pName][id].result.substring(0, 100)}...
-                        </div>
-                    `).join('')}
-                </div>`;
-            container.appendChild(f);
-        });
-    });
-
-    window.copyRes = () => { navigator.clipboard.writeText(document.getElementById('resOutput').innerText); alert("คัดลอกแล้ว"); };
+    function copyResult() {
+        navigator.clipboard.writeText(document.getElementById('resOutput').innerText);
+        alert("คัดลอกลง Clipboard เรียบร้อย!");
+    }
 </script>
+
 </body>
 </html>
